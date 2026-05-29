@@ -1,0 +1,21 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        google()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.3.2'
+    }
+}
+
+allprojects {
+    version = '1.0'
+    ext {
+        appName    = "FlappyBird"
+        gdxVersion = '1.12.1'
+    }
+    repositories {
+        mavenCentral()
+        google()
+    }
+}

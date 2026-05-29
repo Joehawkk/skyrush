@@ -1,0 +1,65 @@
+apply plugin: 'com.android.application'
+
+android {
+    namespace 'com.flappybird'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.flappybird'
+        minSdk 22
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDirs   = ['src']
+            assets.srcDirs = ['assets']
+            res.srcDirs    = ['res']
+            jniLibs.srcDirs = ['libs']
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+}
+
+configurations { natives }
+
+dependencies {
+    implementation project(':core')
+    implementation "com.badlogicgames.gdx:gdx-backend-android:$gdxVersion"
+    natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi-v7a"
+    natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-arm64-v8a"
+    natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86"
+    natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86_64"
+}
+
+tasks.register('copyAndroidNatives') {
+    dependsOn configurations.natives
+    inputs.files configurations.natives
+    outputs.dir file('libs')
+    doFirst {
+        def abiMap = [
+            'natives-armeabi-v7a.jar': 'armeabi-v7a',
+            'natives-arm64-v8a.jar'  : 'arm64-v8a',
+            'natives-x86_64.jar'     : 'x86_64',
+            'natives-x86.jar'        : 'x86'
+        ]
+        abiMap.each { suffix, abi ->
+            file("libs/${abi}/").mkdirs()
+        }
+        configurations.natives.files.each { jar ->
+            abiMap.each { suffix, abi ->
+                if (jar.name.endsWith(suffix)) {
+                    copy { from zipTree(jar); into file("libs/${abi}"); include '*.so' }
+                }
+            }
+        }
+    }
+}
+tasks.named('preBuild').configure { dependsOn 'copyAndroidNatives' }
